@@ -1,0 +1,6 @@
+{
+  "name": "Aura Player",
+  "description": "An ultra-fast, premium Material 3 offline media player supporting advanced audio and video playback, gapless transitions, smart playlists, custom equalizer, and gesture-driven video controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
