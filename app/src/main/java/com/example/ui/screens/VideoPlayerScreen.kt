@@ -109,98 +109,6 @@ fun VideoPlayerScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { pointerInputChange ->
-                        // Query the initial music stream volume
-                        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-                        initialVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
-                        
-                        // Query the initial window screen brightness
-                        val lp = activity?.window?.attributes
-                        val brightness = lp?.screenBrightness ?: -1f
-                        initialBrightness = if (brightness < 0f) 0.5f else brightness
-                        
-                        // Query the initial playback position
-                        initialPosition = viewModel.currentPosition.value
-                        
-                        // Reset accumulated drag values and lock state
-                        accumulatedDragX = 0f
-                        accumulatedDragY = 0f
-                        gestureDirectionLocked = false
-                        showGestureIndicator = false
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        accumulatedDragX += dragAmount.x
-                        accumulatedDragY += dragAmount.y
-                        
-                        val width = size.width
-                        val height = size.height
-                        
-                        // If not locked yet, check if dragging distance exceeded threshold of 15px to lock dominant direction
-                        if (!gestureDirectionLocked) {
-                            if (accumulatedDragX.absoluteValue > 15f || accumulatedDragY.absoluteValue > 15f) {
-                                if (accumulatedDragY.absoluteValue > accumulatedDragX.absoluteValue) {
-                                    // Vertical Swipe: Left side is Brightness, Right side is Volume
-                                    val isLeftSide = change.position.x < width / 2f
-                                    gestureType = if (isLeftSide) "Brightness" else "Volume"
-                                } else {
-                                    // Horizontal Swipe: Seeking
-                                    gestureType = "Seek"
-                                }
-                                gestureDirectionLocked = true
-                                showGestureIndicator = true
-                            }
-                        }
-                        
-                        // If direction is locked, perform continuous updates relative to initial value
-                        if (gestureDirectionLocked) {
-                            when (gestureType) {
-                                "Brightness" -> {
-                                    // Upwards drag reduces Y coordinate, so invert it
-                                    val fraction = -accumulatedDragY / height
-                                    val newBrightness = (initialBrightness + fraction).coerceIn(0.01f, 1.0f)
-                                    
-                                    activity?.window?.attributes = activity?.window?.attributes?.apply {
-                                        screenBrightness = newBrightness
-                                    }
-                                    gestureValue = (newBrightness * 100).toInt()
-                                }
-                                "Volume" -> {
-                                    val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-                                    val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
-                                    val fraction = -accumulatedDragY / height
-                                    val targetVolume = (initialVolume + (fraction * maxVolume)).toInt().coerceIn(0, maxVolume)
-                                    
-                                    audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, targetVolume, 0)
-                                    gestureValue = ((targetVolume.toFloat() / maxVolume) * 100).toInt()
-                                }
-                                "Seek" -> {
-                                    val fraction = accumulatedDragX / width
-                                    // A full screen width swipe represents a seek of up to 120 seconds
-                                    val swipeDurationMs = 120000L
-                                    val targetPos = (initialPosition + (fraction * swipeDurationMs).toLong()).coerceIn(0L, duration)
-                                    viewModel.seekTo(targetPos)
-                                    gestureValue = (targetPos / 1000).toInt()
-                                }
-                            }
-                        }
-                    },
-                    onDragEnd = {
-                        scope.launch {
-                            delay(800)
-                            showGestureIndicator = false
-                            gestureDirectionLocked = false
-                        }
-                    },
-                    onDragCancel = {
-                        showGestureIndicator = false
-                        gestureDirectionLocked = false
-                    }
-                )
-            }
-            .clickable { showControls = !showControls }
     ) {
         // AndroidView wrapping Media3's PlayerView
         AndroidView(
@@ -215,6 +123,107 @@ fun VideoPlayerScreen(
                 view.resizeMode = resizeMode
             },
             modifier = Modifier.fillMaxSize()
+        )
+
+        // Transparent Touch Overlay for Gestures & Click
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { pointerInputChange ->
+                            // Query the initial music stream volume
+                            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                            initialVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+                            
+                            // Query the initial window screen brightness
+                            val lp = activity?.window?.attributes
+                            val brightness = lp?.screenBrightness ?: -1f
+                            initialBrightness = if (brightness < 0f) 0.5f else brightness
+                            
+                            // Query the initial playback position
+                            initialPosition = viewModel.currentPosition.value
+                            
+                            // Reset accumulated drag values and lock state
+                            accumulatedDragX = 0f
+                            accumulatedDragY = 0f
+                            gestureDirectionLocked = false
+                            showGestureIndicator = false
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            accumulatedDragX += dragAmount.x
+                            accumulatedDragY += dragAmount.y
+                            
+                            val width = size.width
+                            val height = size.height
+                            
+                            // If not locked yet, check if dragging distance exceeded threshold of 15px to lock dominant direction
+                            if (!gestureDirectionLocked) {
+                                if (accumulatedDragX.absoluteValue > 15f || accumulatedDragY.absoluteValue > 15f) {
+                                    if (accumulatedDragY.absoluteValue > accumulatedDragX.absoluteValue) {
+                                        // Vertical Swipe: Left side is Brightness, Right side is Volume
+                                        val isLeftSide = change.position.x < width / 2f
+                                        gestureType = if (isLeftSide) "Brightness" else "Volume"
+                                    } else {
+                                        // Horizontal Swipe: Seeking
+                                        gestureType = "Seek"
+                                    }
+                                    gestureDirectionLocked = true
+                                    showGestureIndicator = true
+                                }
+                            }
+                            
+                            // If direction is locked, perform continuous updates relative to initial value
+                            if (gestureDirectionLocked) {
+                                when (gestureType) {
+                                    "Brightness" -> {
+                                        // Upwards drag reduces Y coordinate, so invert it
+                                        val fraction = -accumulatedDragY / height
+                                        val newBrightness = (initialBrightness + fraction).coerceIn(0.01f, 1.0f)
+                                        
+                                        activity?.window?.attributes = activity?.window?.attributes?.apply {
+                                            screenBrightness = newBrightness
+                                        }
+                                        gestureValue = (newBrightness * 100).toInt()
+                                    }
+                                    "Volume" -> {
+                                        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                                        val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
+                                        val fraction = -accumulatedDragY / height
+                                        val targetVolume = (initialVolume + (fraction * maxVolume)).toInt().coerceIn(0, maxVolume)
+                                        
+                                        audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, targetVolume, 0)
+                                        gestureValue = ((targetVolume.toFloat() / maxVolume) * 100).toInt()
+                                    }
+                                    "Seek" -> {
+                                        val fraction = accumulatedDragX / width
+                                        // A full screen width swipe represents a seek of up to 120 seconds
+                                        val swipeDurationMs = 120000L
+                                        val targetPos = (initialPosition + (fraction * swipeDurationMs).toLong()).coerceIn(0L, duration)
+                                        viewModel.seekTo(targetPos)
+                                        gestureValue = (targetPos / 1000).toInt()
+                                    }
+                                }
+                            }
+                        },
+                        onDragEnd = {
+                            scope.launch {
+                                delay(800)
+                                showGestureIndicator = false
+                                gestureDirectionLocked = false
+                            }
+                        },
+                        onDragCancel = {
+                            showGestureIndicator = false
+                            gestureDirectionLocked = false
+                        }
+                    )
+                }
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { showControls = !showControls }
         )
 
         // Custom Overlay UI
