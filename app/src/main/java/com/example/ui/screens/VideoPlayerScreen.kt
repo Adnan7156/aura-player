@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -93,6 +94,14 @@ fun VideoPlayerScreen(
             activity?.requestedOrientation = oldOrientation
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             viewModel.pause()
+        }
+    }
+
+    BackHandler(enabled = true) {
+        if (!isLocked) {
+            onBack()
+        } else {
+            Toast.makeText(context, "Screen is locked", Toast.LENGTH_SHORT).show()
         }
     }
 

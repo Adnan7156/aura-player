@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
+import androidx.activity.compose.BackHandler
 import coil.compose.AsyncImage
 import com.example.ui.components.AudioEffectsPanel
 import com.example.ui.components.WaveformProgressBar
@@ -67,6 +68,17 @@ fun NowPlayingAudioScreen(
     var showEqPanel by remember { mutableStateOf(false) }
     var showQueueView by remember { mutableStateOf(false) }
     var showLyricsOverlay by remember { mutableStateOf(false) }
+
+    // Intercept back presses in priority order:
+    BackHandler(enabled = showLyricsOverlay) {
+        showLyricsOverlay = false
+    }
+    BackHandler(enabled = showQueueView && !showLyricsOverlay) {
+        showQueueView = false
+    }
+    BackHandler(enabled = !showLyricsOverlay && !showQueueView) {
+        onCollapse()
+    }
 
     // Disk rotating animation when playing
     val infiniteTransition = rememberInfiniteTransition(label = "disc_spin")

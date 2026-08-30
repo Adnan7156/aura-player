@@ -1,14 +1,10 @@
 package com.example
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,7 +27,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.data.model.MediaItemEntity
@@ -40,38 +35,42 @@ import com.example.ui.screens.NowPlayingAudioScreen
 import com.example.ui.screens.VideoPlayerScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AuraPlayerViewModel
+import com.example.util.rememberMediaStoragePermissionState
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 
 sealed class Screen {
     object Library : Screen()
     data class VideoPlayer(val video: MediaItemEntity) : Screen()
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 class MainActivity : ComponentActivity() {
-
-    private val requestPermissionsLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val audioGranted = permissions[Manifest.permission.READ_MEDIA_AUDIO] == true ||
-                permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
-        if (audioGranted) {
-            Toast.makeText(this, "Aura: Storage permissions granted!", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
-            MyApplicationTheme(darkTheme = true) { // Force beautiful Premium Dark theme
+            MyApplicationTheme {
                 val context = LocalContext.current
                 val viewModel: AuraPlayerViewModel = viewModel(
                     factory = AuraPlayerViewModel.Factory(context)
                 )
 
-                // Request Permissions on Launch
+                // Accompanist Permissions for local media storage access
+                val mediaPermissionState = rememberMediaStoragePermissionState { permissionsResult ->
+                    val isAnyGranted = permissionsResult.values.any { it }
+                    if (isAnyGranted) {
+                        Toast.makeText(context, "Storage permissions granted!", Toast.LENGTH_SHORT).show()
+                        viewModel.scanMedia()
+                    }
+                }
+
+                // Request permissions smoothly on launch if not granted
                 LaunchedEffect(Unit) {
-                    checkAndRequestPermissions()
+                    if (!mediaPermissionState.allPermissionsGranted) {
+                        mediaPermissionState.launchMultiplePermissionRequest()
+                    }
                 }
 
                 var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
@@ -92,6 +91,7 @@ class MainActivity : ComponentActivity() {
                             is Screen.Library -> {
                                 LibraryScreen(
                                     viewModel = viewModel,
+                                    mediaPermissionState = mediaPermissionState,
                                     onPlayAudio = { track, list ->
                                         viewModel.playQueue(list, list.indexOf(track).coerceAtLeast(0))
                                         showAudioPlayerSheet = true
@@ -232,27 +232,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-    private fun checkAndRequestPermissions() {
-        val permissionsToRequest = mutableListOf<String>()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.READ_MEDIA_VIDEO)
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        }
-
-        if (permissionsToRequest.isNotEmpty()) {
-            requestPermissionsLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 }

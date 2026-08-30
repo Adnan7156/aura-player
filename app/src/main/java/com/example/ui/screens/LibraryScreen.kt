@@ -34,6 +34,10 @@ import coil.compose.AsyncImage
 import com.example.data.model.MediaItemEntity
 import com.example.data.model.PlaylistEntity
 import com.example.ui.viewmodel.AuraPlayerViewModel
+import androidx.activity.compose.BackHandler
+import com.example.util.StoragePermissionBanner
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.MultiplePermissionsState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -45,13 +49,14 @@ sealed class LibraryDetail {
     data class Playlist(val playlistId: Int, val playlistName: String) : LibraryDetail()
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun LibraryScreen(
     viewModel: AuraPlayerViewModel,
     onPlayAudio: (MediaItemEntity, List<MediaItemEntity>) -> Unit,
     onPlayVideo: (MediaItemEntity) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mediaPermissionState: MultiplePermissionsState? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -69,6 +74,10 @@ fun LibraryScreen(
     var showPlaylistDialog by remember { mutableStateOf(false) }
     var playlistNameInput by remember { mutableStateOf("") }
     var showAddToPlaylistSheet by remember { mutableStateOf<String?>(null) } // mediaId to add
+
+    BackHandler(enabled = activeDetail != LibraryDetail.None) {
+        activeDetail = LibraryDetail.None
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -200,6 +209,10 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            if (mediaPermissionState != null && !mediaPermissionState.allPermissionsGranted) {
+                StoragePermissionBanner(permissionState = mediaPermissionState)
+            }
+
             if (activeDetail != LibraryDetail.None) {
                 LibraryDetailScreen(
                     activeDetail = activeDetail,
