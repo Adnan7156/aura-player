@@ -13,6 +13,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -31,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import androidx.activity.compose.BackHandler
+import kotlin.math.roundToInt
 import coil.compose.AsyncImage
 import com.example.ui.components.AudioEffectsPanel
 import com.example.ui.components.WaveformProgressBar
@@ -52,6 +58,10 @@ fun NowPlayingAudioScreen(
     val speed by viewModel.playbackSpeed.collectAsState()
     val pitch by viewModel.pitch.collectAsState()
     val sleepTimerRemaining by viewModel.sleepTimerRemaining.collectAsState()
+
+    val currentVolume by viewModel.currentVolume.collectAsState()
+    val maxVolume = viewModel.maxVolume
+    var previousVolume by remember { mutableIntStateOf(currentVolume.coerceAtLeast(1)) }
 
     val eqEnabled by viewModel.eqEnabled.collectAsState()
     val eq10Bands by viewModel.eq10Bands.collectAsState()
@@ -143,7 +153,7 @@ fun NowPlayingAudioScreen(
                     }
                     IconButton(onClick = { showQueueView = true }) {
                         Icon(
-                            imageVector = Icons.Default.QueueMusic,
+                            imageVector = Icons.AutoMirrored.Filled.QueueMusic,
                             contentDescription = "View Playlist/Queue",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
@@ -370,6 +380,105 @@ fun NowPlayingAudioScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Volume Control (Increase & Decrease Bar - Located on Top of Playback Speed)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    if (currentVolume > 0) {
+                                        previousVolume = currentVolume
+                                        viewModel.setVolume(0)
+                                    } else {
+                                        viewModel.setVolume(previousVolume.coerceAtLeast(1))
+                                    }
+                                }
+                                .padding(vertical = 4.dp, horizontal = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    currentVolume == 0 -> Icons.AutoMirrored.Filled.VolumeMute
+                                    currentVolume < maxVolume / 2 -> Icons.AutoMirrored.Filled.VolumeDown
+                                    else -> Icons.AutoMirrored.Filled.VolumeUp
+                                },
+                                contentDescription = if (currentVolume == 0) "Unmute Volume" else "Mute Volume",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Volume",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        val volumePercent = if (maxVolume > 0) ((currentVolume.toFloat() / maxVolume) * 100).roundToInt() else 0
+                        Text(
+                            text = "$volumePercent%",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.decreaseVolume() },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.VolumeDown,
+                                contentDescription = "Decrease Volume",
+                                tint = if (currentVolume > 0) Color.White else Color.White.copy(alpha = 0.38f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Slider(
+                            value = currentVolume.toFloat(),
+                            onValueChange = { viewModel.setVolume(it.roundToInt()) },
+                            valueRange = 0f..maxVolume.toFloat(),
+                            steps = if (maxVolume > 1) maxVolume - 1 else 0,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 4.dp),
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                            )
+                        )
+
+                        IconButton(
+                            onClick = { viewModel.increaseVolume() },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = "Increase Volume",
+                                tint = if (currentVolume < maxVolume) Color.White else Color.White.copy(alpha = 0.38f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = Color.White.copy(alpha = 0.1f)
+                    )
+
                     // Speed Control Slider
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -525,7 +634,7 @@ fun NowPlayingAudioScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.QueueMusic,
+                                imageVector = Icons.AutoMirrored.Filled.QueueMusic,
                                 contentDescription = "No Queue",
                                 tint = Color.White.copy(alpha = 0.3f),
                                 modifier = Modifier.size(16.dp)
@@ -541,7 +650,7 @@ fun NowPlayingAudioScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Divider(color = Color.White.copy(alpha = 0.08f))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -601,7 +710,7 @@ fun NowPlayingAudioScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Text("Aura DSP Equalizer Effects", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                         }
-                        Icon(Icons.Default.KeyboardArrowRight, "Expand", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Expand", tint = Color.White)
                     }
                 } else {
                     Column {
@@ -810,7 +919,7 @@ fun ActiveQueueView(
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back to Player",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -938,7 +1047,7 @@ fun ActiveQueueView(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.QueueMusic,
+                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
                         contentDescription = "Empty Queue",
                         tint = Color.White.copy(alpha = 0.2f),
                         modifier = Modifier.size(64.dp)
@@ -1114,7 +1223,7 @@ fun SyncedLyricsOverlay(
             ) {
                 IconButton(onClick = onBack) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back to Player",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)

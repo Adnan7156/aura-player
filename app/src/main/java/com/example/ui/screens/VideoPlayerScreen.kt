@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -252,7 +255,7 @@ fun VideoPlayerScreen(
                         onClick = onBack,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Black.copy(alpha = 0.5f))
                     ) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                     }
 
                     Text(
@@ -267,7 +270,10 @@ fun VideoPlayerScreen(
                         // Picture-in-Picture Button
                         IconButton(
                             onClick = {
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                    activity?.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().build())
+                                } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                    @Suppress("DEPRECATION")
                                     activity?.enterPictureInPictureMode()
                                 }
                             },
@@ -471,7 +477,7 @@ fun VideoPlayerScreen(
                                     colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Black.copy(alpha = 0.5f))
                                 ) {
                                     Icon(
-                                        imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                        imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                                         contentDescription = "Mute",
                                         tint = Color.White
                                     )
@@ -496,7 +502,7 @@ fun VideoPlayerScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = when (gestureType) {
-                            "Volume" -> Icons.Default.VolumeUp
+                            "Volume" -> Icons.AutoMirrored.Filled.VolumeUp
                             "Brightness" -> Icons.Default.Brightness6
                             else -> Icons.Default.FastForward
                         },

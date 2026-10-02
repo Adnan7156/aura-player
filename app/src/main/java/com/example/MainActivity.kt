@@ -6,30 +6,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.example.data.model.MediaItemEntity
+import com.example.ui.components.FloatingMiniPlayer
 import com.example.ui.screens.LibraryScreen
 import com.example.ui.screens.NowPlayingAudioScreen
 import com.example.ui.screens.VideoPlayerScreen
@@ -99,112 +89,8 @@ class MainActivity : ComponentActivity() {
                                     onPlayVideo = { video ->
                                         currentScreen = Screen.VideoPlayer(video)
                                     },
-                                    modifier = Modifier.padding(bottom = if (currentTrack != null) 72.dp else 0.dp)
+                                    modifier = Modifier.padding(bottom = if (currentTrack != null && !showAudioPlayerSheet) 88.dp else 0.dp)
                                 )
-
-                                // Anchored Mini Player styled with Elegant Dark guidelines
-                                if (currentTrack != null) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomCenter)
-                                            .padding(horizontal = 12.dp)
-                                            .padding(bottom = 24.dp) // Lift slightly from screen bottom edge
-                                            .fillMaxWidth()
-                                            .height(64.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(MaterialTheme.colorScheme.surface) // `#1C1B1F`
-                                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(16.dp)) // subtle border
-                                            .clickable { showAudioPlayerSheet = true }
-                                    ) {
-                                        // Miniature Top Seek Line
-                                        val progress = if (duration > 0) position.toFloat() / duration else 0f
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth(progress)
-                                                .height(2.dp)
-                                                .background(
-                                                    Brush.horizontalGradient(
-                                                        colors = listOf(
-                                                            MaterialTheme.colorScheme.primary, // `#D0BCFF`
-                                                            MaterialTheme.colorScheme.primaryContainer // `#381E72`
-                                                        )
-                                                    )
-                                                )
-                                                .align(Alignment.TopStart)
-                                        )
-
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(horizontal = 12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            // Miniature Art
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(44.dp)
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (currentTrack?.coverUri != null) {
-                                                    AsyncImage(
-                                                        model = currentTrack?.coverUri,
-                                                        contentDescription = "Mini Art",
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        contentScale = ContentScale.Crop
-                                                    )
-                                                } else {
-                                                    Icon(
-                                                        imageVector = Icons.Default.PlayArrow,
-                                                        contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.width(12.dp))
-
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = currentTrack?.title ?: "",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.onBackground,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    text = currentTrack?.artist ?: "",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-
-                                            // Play/Pause Action with primary lavender tint
-                                            IconButton(
-                                                onClick = { if (isPlaying) viewModel.pause() else viewModel.play() }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    contentDescription = "Play",
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-
-                                            // Skip Next
-                                            IconButton(onClick = { viewModel.skipToNext() }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.SkipNext,
-                                                    contentDescription = "Skip",
-                                                    tint = MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
                             }
 
                             is Screen.VideoPlayer -> {
@@ -216,6 +102,30 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+                        }
+
+                        // Floating Mini-Player Component
+                        // Floats above content when user navigates away from the main playback screen
+                        AnimatedVisibility(
+                            visible = currentTrack != null && !showAudioPlayerSheet && currentScreen is Screen.Library,
+                            enter = slideInVertically(
+                                initialOffsetY = { it },
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioLowBouncy)
+                            ) + fadeIn(),
+                            exit = slideOutVertically(
+                                targetOffsetY = { it },
+                                animationSpec = tween(220)
+                            ) + fadeOut(),
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                                .padding(bottom = 12.dp)
+                        ) {
+                            FloatingMiniPlayer(
+                                viewModel = viewModel,
+                                onExpand = { showAudioPlayerSheet = true },
+                                onDismiss = { viewModel.pause() }
+                            )
                         }
 
                         // Sliding Now Playing Overlay Sheet

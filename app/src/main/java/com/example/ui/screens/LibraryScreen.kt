@@ -16,6 +16,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -180,7 +184,7 @@ fun LibraryScreen(
                 ) {
                     IconButton(onClick = { activeDetail = LibraryDetail.None }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = Color.White
                         )
@@ -355,7 +359,7 @@ fun LibraryScreen(
                                         .padding(vertical = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.PlaylistPlay, "Playlist")
+                                    Icon(Icons.AutoMirrored.Filled.PlaylistPlay, "Playlist")
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Text(playlist.name, style = MaterialTheme.typography.bodyLarge)
                                 }
@@ -630,7 +634,7 @@ fun PlaylistManagerView(
 
         if (playlists.isEmpty()) {
             EmptyStateView(
-                icon = Icons.Default.PlaylistPlay,
+                icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                 title = "No Playlists",
                 subtitle = "Create manual playlists or use the Smart Auto button to intelligently group your library tracks!"
             )
@@ -649,7 +653,7 @@ fun PlaylistManagerView(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.QueueMusic, "Playlist", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, "Playlist", tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(playlist.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                         }
@@ -749,7 +753,7 @@ fun PlaylistManagerView(
                                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             ) {
-                                Icon(Icons.Default.TrendingUp, "Frequency")
+                                Icon(Icons.AutoMirrored.Filled.TrendingUp, "Frequency")
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(horizontalAlignment = Alignment.Start, modifier = Modifier.weight(1f)) {
                                     Text("Group by Play Frequency", fontWeight = FontWeight.Bold)
@@ -771,7 +775,151 @@ fun PlaylistManagerView(
     }
 }
 
-// --- Cinematic Video Grid ---
+// --- Cinematic Video Grid & Folder Explorer ---
+enum class VideoViewMode {
+    ALL, FOLDER_WISE
+}
+
+enum class VideoSortOrder(val label: String) {
+    A_TO_Z("A to Z"),
+    Z_TO_A("Z to A"),
+    DATE_DESCENDING("Newest First"),
+    DATE_ASCENDING("Oldest First")
+}
+
+@Composable
+fun VideoSortFilterButton(
+    currentSort: VideoSortOrder,
+    onSortSelected: (VideoSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        FilterChip(
+            selected = true,
+            onClick = { expanded = true },
+            label = {
+                Text(
+                    text = "Filter: ${currentSort.label}",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = "Filter",
+                    modifier = Modifier.size(16.dp)
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+        ) {
+            Text(
+                text = "Sort & Filter",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            DropdownMenuItem(
+                text = { Text("A to Z (Alphabetical)") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.SortByAlpha,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = if (currentSort == VideoSortOrder.A_TO_Z) {
+                    { Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary) }
+                } else null,
+                onClick = {
+                    onSortSelected(VideoSortOrder.A_TO_Z)
+                    expanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text("Z to A (Reverse Alphabetical)") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.SortByAlpha,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = if (currentSort == VideoSortOrder.Z_TO_A) {
+                    { Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary) }
+                } else null,
+                onClick = {
+                    onSortSelected(VideoSortOrder.Z_TO_A)
+                    expanded = false
+                }
+            )
+
+            HorizontalDivider(
+                color = Color.White.copy(alpha = 0.12f),
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+
+            DropdownMenuItem(
+                text = { Text("Date Added: Newest First (Descending)") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = if (currentSort == VideoSortOrder.DATE_DESCENDING) {
+                    { Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary) }
+                } else null,
+                onClick = {
+                    onSortSelected(VideoSortOrder.DATE_DESCENDING)
+                    expanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text("Date Added: Oldest First (Ascending)") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = if (currentSort == VideoSortOrder.DATE_ASCENDING) {
+                    { Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary) }
+                } else null,
+                onClick = {
+                    onSortSelected(VideoSortOrder.DATE_ASCENDING)
+                    expanded = false
+                }
+            )
+        }
+    }
+}
+
 @Composable
 fun VideoGrid(items: List<MediaItemEntity>, onPlayVideo: (MediaItemEntity) -> Unit) {
     if (items.isEmpty()) {
@@ -780,83 +928,367 @@ fun VideoGrid(items: List<MediaItemEntity>, onPlayVideo: (MediaItemEntity) -> Un
             title = "Cinematic deck empty",
             subtitle = "No video files found. Scan devices or play demo cinematic sequences!"
         )
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(160.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp, top = 8.dp, bottom = 120.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        return
+    }
+
+    var viewMode by remember { mutableStateOf(VideoViewMode.FOLDER_WISE) }
+    var folderSortOrder by remember { mutableStateOf(VideoSortOrder.A_TO_Z) }
+    var allVideosSortOrder by remember { mutableStateOf(VideoSortOrder.A_TO_Z) }
+    var selectedFolder by remember { mutableStateOf<String?>(null) }
+
+    // Intercept back press when inside a folder in folder-wise mode
+    BackHandler(enabled = selectedFolder != null) {
+        selectedFolder = null
+    }
+
+    // Sort function helper
+    val sortList = { list: List<MediaItemEntity>, sort: VideoSortOrder ->
+        when (sort) {
+            VideoSortOrder.A_TO_Z -> list.sortedBy { it.title.lowercase() }
+            VideoSortOrder.Z_TO_A -> list.sortedByDescending { it.title.lowercase() }
+            VideoSortOrder.DATE_DESCENDING -> list.sortedByDescending { it.dateAdded }
+            VideoSortOrder.DATE_ASCENDING -> list.sortedBy { it.dateAdded }
+        }
+    }
+
+    val folders = remember(items) { items.groupBy { it.folderPath } }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Top View Switcher (Folder Wise and All Videos)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(items) { video ->
-                Card(
+            // Option 1: Folder Wise (Default)
+            FilterChip(
+                selected = viewMode == VideoViewMode.FOLDER_WISE,
+                onClick = { viewMode = VideoViewMode.FOLDER_WISE },
+                label = { Text("Folder Wise (${folders.size})") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Folder,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+
+            // Option 2: All Videos
+            FilterChip(
+                selected = viewMode == VideoViewMode.ALL,
+                onClick = {
+                    viewMode = VideoViewMode.ALL
+                    selectedFolder = null
+                },
+                label = { Text("All Videos (${items.size})") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.VideoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+
+        // Inside Folder Wise View
+        if (viewMode == VideoViewMode.FOLDER_WISE) {
+            if (selectedFolder != null) {
+                // Inside a specific folder
+                val currentFolder = selectedFolder ?: ""
+                val videosInFolder = sortList(items.filter { it.folderPath == currentFolder }, folderSortOrder)
+                val folderDisplayName = currentFolder.split("/").lastOrNull()?.ifEmpty { "Storage" } ?: "Folder"
+
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onPlayVideo(video) },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
-                    shape = RoundedCornerShape(16.dp)
+                        .padding(start = 8.dp, end = 16.dp, top = 2.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Box(
+                    IconButton(
+                        onClick = { selectedFolder = null },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back to Folders",
+                            tint = Color.White
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = folderDisplayName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${videosInFolder.size} videos • $currentFolder",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Filter option inside folder
+                    VideoSortFilterButton(
+                        currentSort = folderSortOrder,
+                        onSortSelected = { folderSortOrder = it }
+                    )
+                }
+
+                // Grid of videos in this folder
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(160.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp, top = 4.dp, bottom = 120.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(videosInFolder) { video ->
+                        VideoItemCard(video = video, onPlayVideo = onPlayVideo)
+                    }
+                }
+            } else {
+                // Folder List header with its own Filter option
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Directory Folders",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    // Filter option inside folder wise
+                    VideoSortFilterButton(
+                        currentSort = folderSortOrder,
+                        onSortSelected = { folderSortOrder = it }
+                    )
+                }
+
+                val sortedFolderKeys = when (folderSortOrder) {
+                    VideoSortOrder.A_TO_Z -> folders.keys.sortedBy { (it.split("/").lastOrNull() ?: it).lowercase() }
+                    VideoSortOrder.Z_TO_A -> folders.keys.sortedByDescending { (it.split("/").lastOrNull() ?: it).lowercase() }
+                    VideoSortOrder.DATE_DESCENDING -> folders.keys.sortedByDescending { path -> folders[path]?.maxOfOrNull { it.dateAdded } ?: 0L }
+                    VideoSortOrder.DATE_ASCENDING -> folders.keys.sortedBy { path -> folders[path]?.minOfOrNull { it.dateAdded } ?: 0L }
+                }
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp, top = 4.dp, bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(sortedFolderKeys) { folderPath ->
+                        val videosInThisFolder = folders[folderPath] ?: emptyList()
+                        val folderName = folderPath.split("/").lastOrNull()?.ifEmpty { "Storage" } ?: "Storage"
+                        val firstVideoThumb = videosInThisFolder.firstOrNull { it.coverUri != null }?.coverUri
+
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(100.dp)
-                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
+                                .clickable { selectedFolder = folderPath },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
                         ) {
-                            if (video.coverUri != null) {
-                                AsyncImage(
-                                    model = video.coverUri,
-                                    contentDescription = "Video Thumbnail",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.PlayCircleOutline,
-                                    contentDescription = "Video",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
-
-                            // Duration Badge
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(6.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color.Black.copy(alpha = 0.7f))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val min = video.duration / 60000
-                                val sec = (video.duration % 60000) / 1000
-                                Text(
-                                    text = String.format("%d:%02d", min, sec),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
+                                // Folder icon or video thumbnail preview
+                                Box(
+                                    modifier = Modifier
+                                        .size(54.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (firstVideoThumb != null) {
+                                        AsyncImage(
+                                            model = firstVideoThumb,
+                                            contentDescription = "Folder preview",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Folder,
+                                            contentDescription = "Folder",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(30.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(14.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = folderName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${videosInThisFolder.size} videos",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = folderPath,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = "Open folder",
+                                    tint = Color.White.copy(alpha = 0.6f)
                                 )
                             }
-                        }
-
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(
-                                text = video.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = video.genre,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
                         }
                     }
                 }
+            }
+        } else {
+            // ViewMode == ALL: Header with its own Filter option, then sorted video grid
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "All Cinematic Videos",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                // Filter option inside All Videos
+                VideoSortFilterButton(
+                    currentSort = allVideosSortOrder,
+                    onSortSelected = { allVideosSortOrder = it }
+                )
+            }
+
+            val sortedVideos = sortList(items, allVideosSortOrder)
+
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(160.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp, top = 4.dp, bottom = 120.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(sortedVideos) { video ->
+                    VideoItemCard(video = video, onPlayVideo = onPlayVideo)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoItemCard(video: MediaItemEntity, onPlayVideo: (MediaItemEntity) -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onPlayVideo(video) },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (video.coverUri != null) {
+                    AsyncImage(
+                        model = video.coverUri,
+                        contentDescription = "Video Thumbnail",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.PlayCircleOutline,
+                        contentDescription = "Video",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+
+                // Duration Badge
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    val min = video.duration / 60000
+                    val sec = (video.duration % 60000) / 1000
+                    Text(
+                        text = String.format("%d:%02d", min, sec),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = video.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = video.genre,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
         }
     }

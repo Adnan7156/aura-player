@@ -10,10 +10,13 @@ import com.example.data.model.PlaylistEntity
 import com.example.data.repository.MediaRepository
 import com.example.player.AuraPlayerManager
 import com.example.player.LyricLine
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-@kotlinx.coroutines.ExperimentalCoroutinesApi
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class AuraPlayerViewModel(
     private val repository: MediaRepository,
     private val playerManager: AuraPlayerManager,
@@ -83,9 +86,42 @@ class AuraPlayerViewModel(
     val prebufferStatus = playerManager.prebufferStatus
     val nextTrackTitle = playerManager.nextTrackTitle
 
+    // --- Volume Management ---
+    private val audioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+    val maxVolume: Int = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+
+    private val _currentVolume = MutableStateFlow(audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC))
+    val currentVolume: StateFlow<Int> = _currentVolume.asStateFlow()
+
     init {
         // Automatically scan device storage when ViewModel is initialized
         scanMedia()
+        viewModelScope.launch {
+            while (currentCoroutineContext().isActive) {
+                syncVolume()
+                delay(300)
+            }
+        }
+    }
+
+    fun setVolume(volume: Int) {
+        val target = volume.coerceIn(0, maxVolume)
+        _currentVolume.value = target
+        try {
+            audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, target, 0)
+        } catch (_: Exception) {}
+    }
+
+    fun increaseVolume() {
+        setVolume(_currentVolume.value + 1)
+    }
+
+    fun decreaseVolume() {
+        setVolume(_currentVolume.value - 1)
+    }
+
+    fun syncVolume() {
+        _currentVolume.value = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
     }
 
     fun scanMedia() {
