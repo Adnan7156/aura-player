@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,6 +30,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +40,7 @@ import androidx.media3.common.Player
 import androidx.activity.compose.BackHandler
 import kotlin.math.roundToInt
 import coil.compose.AsyncImage
+import com.example.R
 import com.example.ui.components.AudioEffectsPanel
 import com.example.ui.components.WaveformProgressBar
 import com.example.ui.viewmodel.AuraPlayerViewModel
@@ -190,7 +193,7 @@ fun NowPlayingAudioScreen(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Futuristic glowing placeholder disc with elegant purple gradients
+                    // Futuristic glowing placeholder disc with official Aura Player standard logo
                     Box(
                         modifier = Modifier
                             .fillMaxSize(0.9f)
@@ -205,7 +208,14 @@ fun NowPlayingAudioScreen(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.MusicNote, "Vinyl", modifier = Modifier.size(64.dp), tint = Color.Black)
+                        Image(
+                            painter = painterResource(id = R.drawable.img_aura_logo_1790965105681),
+                            contentDescription = "Aura Player Standard Logo",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
                     }
                 }
 

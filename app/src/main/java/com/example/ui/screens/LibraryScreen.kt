@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,11 +32,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.R
 import com.example.data.model.MediaItemEntity
 import com.example.data.model.PlaylistEntity
 import com.example.ui.viewmodel.AuraPlayerViewModel
@@ -94,52 +99,140 @@ fun LibraryScreen(
                         .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                // Search bar and scan action styled for Elegant Dark theme
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.search(it) },
-                        placeholder = { Text("Instant search Aura...") },
-                        leadingIcon = { Icon(Icons.Default.Search, "Search") },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.search("") }) {
-                                    Icon(Icons.Default.Close, "Clear search")
-                                }
-                            }
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface, // `#1C1B1F`
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface, // `#1C1B1F`
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
+                    // Standard Brand Header with Aura Logo
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(24.dp)),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    IconButton(
-                        onClick = { viewModel.scanMedia() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surface // `#1C1B1F` circular background
-                        )
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Sync and Rescan",
-                            tint = MaterialTheme.colorScheme.primary // lavender tint
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Standard Glowing Aura Logo Emblem
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(
+                                        width = 1.5.dp,
+                                        brush = Brush.linearGradient(
+                                            listOf(Color(0xFF00FFF0), Color(0xFFB388FF))
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .background(Color(0xFF0E0E17)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.img_aura_logo_1790965105681),
+                                    contentDescription = "Aura Player Logo",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(10.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "AURA",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 1.5.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    listOf(
+                                                        Color(0xFF00FFF0).copy(alpha = 0.2f),
+                                                        Color(0xFFB388FF).copy(alpha = 0.25f)
+                                                    )
+                                                )
+                                            )
+                                            .border(
+                                                width = 1.dp,
+                                                color = Color(0xFF00FFF0).copy(alpha = 0.5f),
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "HI-RES",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF00FFF0),
+                                            letterSpacing = 0.8.sp
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Cinematic & Studio Audio",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Rescan / Sync Action Button
+                        IconButton(
+                            onClick = { viewModel.scanMedia() },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                            ),
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Sync and Rescan",
+                                tint = Color(0xFF00FFF0),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    // Search bar and scan action styled for Elegant Dark theme
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.search(it) },
+                            placeholder = { Text("Instant search Aura...") },
+                            leadingIcon = { Icon(Icons.Default.Search, "Search") },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.search("") }) {
+                                        Icon(Icons.Default.Close, "Clear search")
+                                    }
+                                }
+                            },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface, // `#1C1B1F`
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface, // `#1C1B1F`
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp)),
+                            singleLine = true
                         )
                     }
-                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -1308,13 +1401,49 @@ fun EmptyStateView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-            modifier = Modifier.size(72.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .size(92.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .border(
+                    width = 2.dp,
+                    brush = Brush.linearGradient(
+                        listOf(Color(0xFF00FFF0), Color(0xFFB388FF))
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .background(Color(0xFF0E0E17)),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.img_aura_logo_1790965105681),
+                contentDescription = "Aura Player Logo",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(20.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            // Small context icon badge on corner
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 6.dp, y = 6.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .border(1.5.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(6.dp))
         Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)

@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/aura_icon_1784396328119"
+        android:drawable="@drawable/img_aura_logo_1790965105681"
         android:gravity="center" />
 </layer-list>
